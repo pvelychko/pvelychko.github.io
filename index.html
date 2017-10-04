@@ -1,11 +1,176 @@
-<!DOCTYPE html>
 <html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Pavlo Velychko</title>
-  </head>
+<head>
+    <script src="lz-string.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const searchParams = new URLSearchParams(window.location.search);
+            const env = searchParams.get('env');
+            
+            console.log(searchParams.get('data'));
+
+            const decompressedJson = LZString.decompressFromEncodedURIComponent(searchParams.get('data'));
+
+            const json = JSON.parse(decompressedJson);
+            json[0].location = getLocation(json[0].game, env);
+            const data = json[0];
+
+            template = $('#template').html(), output = Mustache.render(template, data);
+            $('#container').append(output);
+
+            $.get(json[0].location + 'template.mustache', function(templates) {
+                // Fetch the <script /> block from the loaded external
+                // template file which contains our greetings template.
+                var template = $(templates).html();
+                $('body').append(Mustache.render(template, data));
+            });
+        })
+        function getLocation(game, env) {
+            var environment = env;
+            if (environment === 'localhost') {
+                environment = 'test';
+            }
+
+            if (game.startsWith("Lottery")) {
+                game = "Lottery";
+            }
+            var cdn;
+            if (environment.indexOf('.') === -1) {
+            cdn = environment + '.nolimitcdn.com';
+            } else {
+                cdn = environment;
+            }
+            return "https://" + cdn + "/games/" + game + "/nolimit/game-history/";
+        }
+    </script>
+    <style type="text/css">
+        body {
+            font-family: Helvetica, Arial, Verdana, sans-serif;
+            font-size: 90%;
+            padding: 2em;
+        }
+
+        table {
+            font-size: inherit;
+        }
+
+        dl {
+            margin: 0;
+            padding: 0;
+        }
+
+        ul {
+            list-style: none;
+            margin: 0 0 0 20px;
+            padding: 0;
+        }
+
+        dl dd {
+            display: inline;
+            margin: 0 0 0 1em;
+            text-align: right;
+            min-width: 150px;
+            font-weight: bold;
+        }
+
+        dl dd:after {
+            display: block;
+            content: '';
+        }
+
+        dl dt {
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        #game-round-information {
+            margin-bottom: 20px;
+        }
+
+        #game-round-summary {
+            margin-top: 20px;
+            font-size: 120%;
+        }
+
+        .reels {
+            margin: 20px 0 10px 0;
+        }
+
+        .reels td {
+            padding: 5px;
+        }
+
+        .reels td img {
+            max-width: 64px;
+            max-height: 64px;
+        }
+
+        .betline-sym {
+            max-width: 32px;
+            max-height: 32px;
+        }
+
+        .transactions h3 {
+            margin: 0.5em 0;
+        }
+
+        .transactions .heading {
+            font-weight: bold;
+        }
+
+        .transactions .body {
+            display: block;
+            padding: 1em 0;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .transactions .body:after {
+            border-bottom: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
 <body>
-  <h3>Pavlo Velychko homepage</h3>
-  Initial commit.
+
+<script type="text/html" id="template">
+    <h2>Game round information</h2>
+    <div id="game-round-information">
+        <dl>
+            <dt>Game round id:</dt>
+            <dd>{{ gameRoundId }}</dd>
+            <dt>Player:</dt>
+            <dd>{{ userId }}</dd>
+            {{#promoName}}
+            <dt>Promo:</dt>
+            <dd>{{.}}</dd>
+            {{/promoName}}
+            <dt>Client:</dt>
+            <dd>{{ client }}</dd>
+            <dt>Game:</dt>
+            <dd>{{ game }}</dd>
+            <dt>Start time:</dt>
+            <dd>{{ startTime }}</dd>
+            <dt>End time:</dt>
+            <dd>{{ endTime }}</dd>
+        </dl>
+    </div>
+
+    <div id="game-round-summary">
+        <h3>Summary</h3>
+        <dl>
+            <dt>Bet:</dt>
+            <dd>{{ totalBet }}</dd>
+            <dt>Win:</dt>
+            <dd>{{ totalWin }}</dd>
+            <dt>Closing balance:</dt>
+            <dd>{{ balanceAfter }}</dd>
+        </dl>
+    </div>
+</script>
+
+<!-- this div is empty on page load -->
+<div id="container"></div>
+
+
 </body>
 </html>
